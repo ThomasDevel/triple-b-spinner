@@ -1,0 +1,121 @@
+html,
+body {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  border: 0;
+  padding: 0;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+  -webkit-box-sizing: inherit;
+  -moz-box-sizing: inherit;
+  box-sizing: inherit;
+}
+
+#app {
+  width: 100%;
+  height: 100%;
+
+  background: antiquewhite;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.slots {
+  display: flex;
+}
+
+/* .slot {
+  background: #fafafa;
+  box-shadow: 0 0 3px 2px rgba(0, 0, 0, 0.4) inset;
+
+  width: 150px;
+  height: 150px;
+  overflow: hidden;
+
+  border-radius: 1ex;
+  margin: 1ch;
+} */
+
+.boxes {
+  /* transform: translateY(0); */
+  transition: transform 1s ease-in-out;
+}
+
+.box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  font-size: 3rem;
+}
+
+.buttons {
+  margin: 1rem 0 2rem 0;
+}
+
+button {
+  cursor: pointer;
+
+  font-size: 1.2rem;
+  text-transform: uppercase;
+
+  margin: 0 0.2rem 0 0.2rem;
+}
+
+.info {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  text-align: center;
+}
+
+.wrapper {
+  display: flex;
+  align-content: center;
+}
+
+/* @keyframes duration | easing-function | delay |
+iteration-count | direction | fill-mode | play-state | name */
+.slot {
+  height: 400px;
+  width: 400px;
+  scale: 0.75;
+  background: url("./img/css_sprites_top_down.png");
+}
+
+.slot-offset0 {
+  animation: sprite 1.5s cubic-bezier(0.3, 0.3, 0.7, 1.4) 3s 1 normal forwards,
+    sprite 1.5s cubic-bezier(0, 0, 1, 1) 1.5s 1 normal,
+    sprite 1.5s cubic-bezier(0.74, 0, 0.62, 0.62) 0s 1 normal;
+}
+
+.slot-offset1 {
+  animation: sprite 1.5s cubic-bezier(0.3, 0.3, 0.7, 1.4) 3.4s 1 normal forwards,
+    sprite 1.5s cubic-bezier(0, 0, 1, 1) 1.9s 1 normal,
+    sprite 1.5s cubic-bezier(0.74, 0, 0.62, 0.62) 0.4s 1 normal;
+}
+
+.slot-offset2 {
+  animation: sprite 1.5s cubic-bezier(0.3, 0.3, 0.7, 1.4) 3.8s 1 normal forwards,
+    sprite 1.5s cubic-bezier(0, 0, 1, 1) 2.3s 1 normal,
+    sprite 1.5s cubic-bezier(0.74, 0, 0.62, 0.62) 0.8s 1 normal;
+}
+
+@keyframes sprite {
+  from {
+    background-position-y: 6400px; /* spritesheet heigth * sprites */
+  }
+  to {
+    background-position-y: 12400px; /* terminal width * # sprites */
+  }
+}
