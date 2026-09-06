@@ -76,13 +76,19 @@ body {
     0 calc(var(--frame-size) * 0.05) calc(var(--frame-size) * 0.16)
       rgba(0, 0, 0, 0.25);
 
+  appearance: none;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
   transition: scale 0.12s ease-out, box-shadow 0.2s ease-out;
 }
 
-.spinner:active {
+.spinner:active:not(:disabled) {
   scale: 0.985;
 }
 
@@ -91,7 +97,7 @@ body {
   outline-offset: 3px;
 }
 
-.spinner.is-busy {
+.spinner:disabled {
   cursor: default;
 }
 
@@ -196,7 +202,24 @@ iteration-count | direction | fill-mode | play-state | name */
   opacity: 0;
 }
 
-.banner.is-shown {
+.banner span {
+  grid-area: 1 / 1;
+  display: none;
+}
+
+.spinner.has-result[data-landed="1"] [data-frame="1"],
+.spinner.has-result[data-landed="2"] [data-frame="2"],
+.spinner.has-result[data-landed="3"] [data-frame="3"],
+.spinner.has-result[data-landed="4"] [data-frame="4"],
+.spinner.has-result[data-landed="5"] [data-frame="5"],
+.spinner.has-result[data-landed="6"] [data-frame="6"],
+.spinner.has-result[data-landed="7"] [data-frame="7"],
+.spinner.has-result[data-landed="8"] [data-frame="8"],
+.spinner.has-result[data-landed="9"] [data-frame="9"] {
+  display: block;
+}
+
+.spinner.has-result .banner {
   animation: banner-pop 0.4s cubic-bezier(0.2, 1.4, 0.5, 1) 1 normal forwards;
 }
 

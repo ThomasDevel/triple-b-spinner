@@ -7,19 +7,26 @@
   </head>
   <body>
     <div id="app">
-      <div
-        class="spinner"
-        role="button"
-        tabindex="0"
-        aria-label="Spin the reels"
-      >
+      <!-- A real button gives click, Enter, Space and focus for free. -->
+      <button type="button" class="spinner" aria-label="Spin the reels">
         <div class="reels">
           <div class="slot"></div>
           <div class="slot"></div>
           <div class="slot"></div>
         </div>
-        <p class="banner" aria-live="polite"></p>
-      </div>
+        <p class="banner" aria-live="polite">
+          <span data-frame="0">?</span>
+          <span data-frame="1">Being Bamboozled</span>
+          <span data-frame="2">Bobr, Kurwa!</span>
+          <span data-frame="3">Bobr!</span>
+          <span data-frame="4">Brothers</span>
+          <span data-frame="5">Berlin? Bratislava!</span>
+          <span data-frame="6">Black Betty Bambalam</span>
+          <span data-frame="7">Bamboozling</span>
+          <span data-frame="8">Beautiful Bodacious Booze</span>
+          <span data-frame="9">Bully Boss Business Mykull</span>
+        </p>
+      </button>
 
       <p class="info"></p>
     </div>
