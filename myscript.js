@@ -1,70 +1,131 @@
-function init() {
+// example https://codepen.io/tangxuguo/pen/xqrNmx
+// https://blog.logrocket.com/making-css-animations-using-a-sprite-sheet/
+// https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_animations/Using_CSS_animations
+// https://codepen.io/NeatDesigns/pen/wvJvaYK -> css variables
+// https://css-tricks.com/using-custom-properties-to-wrangle-variations-in-keyframe-animations/
+
+(function () {
   "use strict";
 
-  // example https://codepen.io/tangxuguo/pen/xqrNmx
-  // https://blog.logrocket.com/making-css-animations-using-a-sprite-sheet/
-  // https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_animations/Using_CSS_animations
-  // https://codepen.io/NeatDesigns/pen/wvJvaYK -> css variables
-  // https://css-tricks.com/using-custom-properties-to-wrangle-variations-in-keyframe-animations/
-
-  const paths = [
-    "images/bamboozling.png",
-    "images/bamboozled.png",
-    "images/business.png",
-    "images/booze.png",
-    "images/bambalam.png",
-    "images/bratislava.png",
-    "images/brothers.png",
-    "images/bobr.png",
-    "images/bobr_kurwa.png",
+  // In the order the frames are stacked in img/css_sprites_top_down.png.
+  const FRAME_LABELS = [
+    "?",
+    "Being Bamboozled",
+    "Bobr, Kurwa!",
+    "Bobr!",
+    "Brothers",
+    "Berlin? Bratislava!",
+    "Black Betty Bambalam",
+    "Bamboozling",
+    "Beautiful Bodacious Booze",
+    "Bully Boss Business Mykull",
   ];
+  const FRAME_COUNT = FRAME_LABELS.length;
+  const STORAGE_KEY = "triple-b-spinner:landed-frame";
 
-  paths.forEach((imagePath, index) => {
-    let img = document.createElement("img");
-    img.src = imagePath;
-    img.width = 100;
-    img.height = 100;
-    document.getElementById("images").appendChild(img);
+  const widget = document.querySelector(".spinner");
+  const slots = Array.from(widget.querySelectorAll(".slot"));
+  const banner = widget.querySelector(".banner");
+  const info = document.querySelector(".info");
+
+  let landedFrame = readLandedFrame();
+  let spins = 0;
+  let spinning = false;
+
+  widget.addEventListener("click", spin);
+  widget.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault(); // stop the space bar scrolling the host page
+    spin();
   });
+  widget.style.setProperty("--frame-count", FRAME_COUNT);
+  render();
 
-  // let iterationCount = 0;
+  async function spin() {
+    if (spinning) return;
+    setSpinning(true);
+    hideBanner();
 
-  // const animation = document.querySelector(".slot");
-  // const animations = document.querySelectorAll(".slot");
+    const from = landedFrame;
+    // Frame 0 is the "?" placeholder that a first-time visitor starts on. A
+    // spin coming off the last frame steps over it onto frame 1, so once you
+    // have spun once it is never shown again.
+    const to = (from + 1) % FRAME_COUNT === 0 ? from + 2 : from + 1;
 
-  // document.getElementById("wrapper").onclick = function () {
-  //   let element0 = document.getElementById("slot0");
-  //   let element1 = document.getElementById("slot1");
-  //   let element2 = document.getElementById("slot2");
+    widget.style.setProperty("--frame-from", from);
+    widget.style.setProperty("--frame-to", to);
 
-  //   element0.classList.add("slot-offset0");
-  //   element1.classList.add("slot-offset1");
-  //   element2.classList.add("slot-offset2");
-  // };
+    await Promise.all(slots.map(runSpin));
 
-  // const doors = document.querySelectorAll(".slot");
-  // document.querySelector("#spinner").addEventListener("click", spin);
-  // document.querySelector("#reseter").addEventListener("click", init);
+    // to and to % FRAME_COUNT sit on the same frame of the repeating sheet,
+    // so handing the position back to --frame-landed is invisible.
+    landedFrame = to % FRAME_COUNT;
+    spins += 1;
+    writeLandedFrame(landedFrame);
+    render();
+    slots.forEach((slot) => slot.classList.remove("is-spinning"));
+    showBanner();
 
-  // async function spin() {
-  //   init(false, 1, 2);
-  //   for (const door of doors) {
-  //     const boxes = door.querySelector(".boxes");
-  //     const duration = parseInt(boxes.style.transitionDuration);
-  //     boxes.style.transform = "translateY(0)";
-  //     await new Promise((resolve) => setTimeout(resolve, duration * 100));
-  //   }
-  // }
-}
+    setSpinning(false);
+  }
 
-function spin() {
-  let slot0 = document.getElementById("slot0");
-  let slot1 = document.getElementById("slot1");
-  let slot2 = document.getElementById("slot2");
+  async function runSpin(slot) {
+    slot.classList.remove("is-spinning");
+    void slot.offsetWidth; // flush the removal, otherwise re-adding the class does not restart the animation
+    slot.classList.add("is-spinning");
 
-  slot0.classList.add("slot-offset0");
-  slot1.classList.add("slot-offset1");
-  slot2.classList.add("slot-offset2");
-}
+    // The settle leg is the last one to run, so it finishing means the whole
+    // spin is done.
+    const settle = slot
+      .getAnimations()
+      .find((animation) => animation.animationName === "settle");
+    if (!settle) return; // no animation to wait on, so the slot is already on its frame
 
-init();
+    await settle.finished.catch(() => {});
+  }
+
+  function showBanner() {
+    banner.textContent = FRAME_LABELS[landedFrame];
+    banner.classList.remove("is-shown");
+    void banner.offsetWidth; // same restart flush as the slots need
+    banner.classList.add("is-shown");
+  }
+
+  function hideBanner() {
+    banner.classList.remove("is-shown");
+    banner.textContent = "";
+  }
+
+  function setSpinning(active) {
+    spinning = active;
+    widget.classList.toggle("is-busy", active);
+    widget.setAttribute("aria-disabled", String(active));
+  }
+
+  function render() {
+    widget.style.setProperty("--frame-landed", landedFrame);
+    info.textContent = `Landed on ${FRAME_LABELS[landedFrame]} · image ${
+      landedFrame + 1
+    } of ${FRAME_COUNT} · ${spins} ${spins === 1 ? "spin" : "spins"}`;
+  }
+
+  function readLandedFrame() {
+    try {
+      const stored = Number(localStorage.getItem(STORAGE_KEY));
+      if (Number.isInteger(stored) && stored >= 0 && stored < FRAME_COUNT) {
+        return stored;
+      }
+    } catch (error) {
+      // storage is unavailable on some file:// origins
+    }
+    return 0;
+  }
+
+  function writeLandedFrame(frame) {
+    try {
+      localStorage.setItem(STORAGE_KEY, String(frame));
+    } catch (error) {
+      // storage is unavailable on some file:// origins
+    }
+  }
+})();

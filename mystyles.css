@@ -18,6 +18,7 @@ body {
   box-sizing: inherit;
 }
 
+/* Host page, only here to park the widget in the middle of the demo. */
 #app {
   width: 100%;
   height: 100%;
@@ -28,94 +29,189 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-}
-
-.slots {
-  display: flex;
-}
-
-/* .slot {
-  background: #fafafa;
-  box-shadow: 0 0 3px 2px rgba(0, 0, 0, 0.4) inset;
-
-  width: 150px;
-  height: 150px;
-  overflow: hidden;
-
-  border-radius: 1ex;
-  margin: 1ch;
-} */
-
-.boxes {
-  /* transform: translateY(0); */
-  transition: transform 1s ease-in-out;
-}
-
-.box {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  font-size: 3rem;
-}
-
-.buttons {
-  margin: 1rem 0 2rem 0;
-}
-
-button {
-  cursor: pointer;
-
-  font-size: 1.2rem;
-  text-transform: uppercase;
-
-  margin: 0 0.2rem 0 0.2rem;
+  gap: 1.25rem;
 }
 
 .info {
-  position: fixed;
-  bottom: 0;
-  width: 100%;
+  margin: 0;
+  font: 0.8rem/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: rgba(0, 0, 0, 0.5);
   text-align: center;
 }
 
-.wrapper {
+/* ── the widget ────────────────────────────────────────────────────────── */
+
+.spinner {
+  /* Everything sizes off one frame, so this is the only number to change to
+     make the whole widget bigger or smaller. */
+  --frame-size: 110px;
+  --frame-count: 10;
+  --seam: 2px;
+
+  /* Speed. The spin leg runs from rest out to the overshoot peak and the
+     settle leg brings it back to the target. Both are motionless at that
+     peak, so the legs meet without any change of speed. Cycles has to stay
+     a whole number, so that the extra travel cancels out against the sheet
+     and the reel still comes to rest on --frame-to. */
+  --spin-duration: 4.45s;
+  /* Shortening this snaps the reel back harder. Below about 0.12s most of
+     the return lands inside four frames on a 60Hz screen, and half that on
+     a 30Hz one, at which point it reads as a jump rather than a movement. */
+  --settle-duration: 0.22s;
+  --stagger-step: 0.4s;
+  --cycles: 3;
+  --overshoot: 0.8;
+
+  --frame-landed: 0;
+  --frame-from: 0;
+  --frame-to: 1;
+
+  position: relative;
+  width: max-content;
+  padding: var(--seam);
+
+  background: #1b1b1b;
+  border-radius: calc(var(--frame-size) * 0.16);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset,
+    0 calc(var(--frame-size) * 0.05) calc(var(--frame-size) * 0.16)
+      rgba(0, 0, 0, 0.25);
+
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: scale 0.12s ease-out, box-shadow 0.2s ease-out;
+}
+
+.spinner:active {
+  scale: 0.985;
+}
+
+.spinner:focus-visible {
+  outline: 3px solid #3b6ea5;
+  outline-offset: 3px;
+}
+
+.spinner.is-busy {
+  cursor: default;
+}
+
+/* Separate from .spinner so the corners can clip the reels without also
+   clipping the banner, which overhangs them. */
+.reels {
   display: flex;
-  align-content: center;
+  gap: var(--seam);
+  overflow: hidden;
+  border-radius: calc(var(--frame-size) * 0.12);
+}
+
+.slot {
+  --stagger: 0s;
+
+  width: var(--frame-size);
+  height: var(--frame-size);
+
+  background-image: url("./img/css_sprites_top_down.png");
+  /* The sheet is 400x4000, so pinning its width scales every frame to
+     --frame-size and keeps all the offsets below in whole frames. */
+  background-size: var(--frame-size) auto;
+  /* The reel spins by running this off the end of the sheet, which only
+     wraps back around because the background repeats. */
+  background-repeat: repeat;
+  background-position-y: calc(var(--frame-landed) * var(--frame-size) * -1);
+}
+
+.slot:nth-child(2) {
+  --stagger: var(--stagger-step);
+}
+
+.slot:nth-child(3) {
+  --stagger: calc(var(--stagger-step) * 2);
 }
 
 /* @keyframes duration | easing-function | delay |
 iteration-count | direction | fill-mode | play-state | name */
-.slot {
-  height: 400px;
-  width: 400px;
-  scale: 0.75;
-  background: url("./img/css_sprites_top_down.png");
+.slot.is-spinning {
+  /* Listed in reverse order: the later entry wins while it is running, and a
+     finished leg without a fill-mode stops applying, so the settle leg takes
+     over at the exact moment the spin leg ends. */
+  animation: settle var(--settle-duration) cubic-bezier(0.55, 0, 0.3, 1)
+      calc(var(--spin-duration) + var(--stagger)) 1 normal forwards,
+    spin var(--spin-duration) cubic-bezier(0.35, 0, 0.4, 1) var(--stagger);
 }
 
-.slot-offset0 {
-  animation: sprite 1.5s cubic-bezier(0.3, 0.3, 0.7, 1.4) 3s 1 normal forwards,
-    sprite 1.5s cubic-bezier(0, 0, 1, 1) 1.5s 1 normal,
-    sprite 1.5s cubic-bezier(0.74, 0, 0.62, 0.62) 0s 1 normal;
-}
-
-.slot-offset1 {
-  animation: sprite 1.5s cubic-bezier(0.3, 0.3, 0.7, 1.4) 3.4s 1 normal forwards,
-    sprite 1.5s cubic-bezier(0, 0, 1, 1) 1.9s 1 normal,
-    sprite 1.5s cubic-bezier(0.74, 0, 0.62, 0.62) 0.4s 1 normal;
-}
-
-.slot-offset2 {
-  animation: sprite 1.5s cubic-bezier(0.3, 0.3, 0.7, 1.4) 3.8s 1 normal forwards,
-    sprite 1.5s cubic-bezier(0, 0, 1, 1) 2.3s 1 normal,
-    sprite 1.5s cubic-bezier(0.74, 0, 0.62, 0.62) 0.8s 1 normal;
-}
-
-@keyframes sprite {
+@keyframes spin {
   from {
-    background-position-y: 6400px; /* spritesheet heigth * sprites */
+    background-position-y: calc(var(--frame-from) * var(--frame-size) * -1);
   }
   to {
-    background-position-y: 12400px; /* terminal width * # sprites */
+    background-position-y: calc(
+      (
+          var(--frame-to) + var(--overshoot) + var(--cycles) *
+            var(--frame-count)
+        ) * var(--frame-size) * -1
+    );
+  }
+}
+
+@keyframes settle {
+  from {
+    /* The cycles are left off deliberately: this is the same pixel of the
+       repeating sheet that the spin leg finished on. */
+    background-position-y: calc(
+      (var(--frame-to) + var(--overshoot)) * var(--frame-size) * -1
+    );
+  }
+  to {
+    background-position-y: calc(var(--frame-to) * var(--frame-size) * -1);
+  }
+}
+
+.banner {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding-inline: calc(var(--frame-size) * 0.04);
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+
+  font-family: Impact, Haettenschweiler, "Arial Black", sans-serif;
+  /* Sized so that even the longest label stays inside the panel on two
+     lines, rather than covering the images it is meant to sit over. */
+  font-size: calc(var(--frame-size) * 0.24);
+  line-height: 1.05;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  /* the longer labels wrap onto two or three lines */
+  text-wrap: balance;
+
+  color: antiquewhite;
+  -webkit-text-stroke: calc(var(--frame-size) * 0.035) #1b1b1b;
+  /* Without this the stroke is painted over the fill and eats half of it. */
+  paint-order: stroke fill;
+  text-shadow: 0 calc(var(--frame-size) * 0.025) 0 rgba(0, 0, 0, 0.3);
+
+  rotate: -5deg;
+  opacity: 0;
+}
+
+.banner.is-shown {
+  animation: banner-pop 0.4s cubic-bezier(0.2, 1.4, 0.5, 1) 1 normal forwards;
+}
+
+@keyframes banner-pop {
+  from {
+    opacity: 0;
+    scale: 0.4;
+    rotate: -14deg;
+  }
+  60% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+    rotate: -5deg;
   }
 }
